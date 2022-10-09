@@ -24,7 +24,7 @@ Things like timezone, partitioning scheme, filesystem, and anything else not con
 
 Download the script with curl:
 
-    curl -Lo install.sh tinyurl.com/tralph3-arch
+    curl -Lo install.sh "https://tinyurl.com/ddob-install"
 
 Mark the file as executable, then run it:
 
