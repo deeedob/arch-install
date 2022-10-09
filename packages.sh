@@ -15,7 +15,6 @@ BASE_APPS=(
     'efibootmgr'                    # OPTIONAL: Modify UEFI systems from CLI
     'git'                           # OPTIONAL: Version Control System, needed for the Grub theme, Dotfiles, and Paru
     'gnu-free-fonts'                # OPTIONAL: Additional system fonts
-    'grub'                          # NEEDED: Bootloader
     'linux-headers'                 # OPTIONAL: Scripts for building kernel modules
     'man-db'                        # OPTIONAL: Manual database
     'mtools'                        # OPTIONAL: Utilities for DOS disks
@@ -36,15 +35,13 @@ BASE_APPS=(
 APPS=(
     'alsa-utils'                    # OPTIONAL: Utilities for managing alsa cards
     'android-tools'                 # OPTIONAL: Utilities for managing android devices
-    'audacity'                      # OPTIONAL: Audio editor
-    'emacs'                         # OPTIONAL: Objectively better than vim
     'exa'                           # OPTIONAL: Replacement for the ls command
     'ffmpeg'                        # OPTIONAL: Audio and video magic
     'firefox'                       # OPTIONAL: Web browser
     'flameshot'                     # OPTIONAL: Screenshot utility
     'gimp'                          # OPTIONAL: Image editor
     'helvum'                        # OPTIONAL: GUI for Pipewire configuration
-    'htop'                          # OPTIONAL: System and process manager
+    'btop'                          # OPTIONAL: System and process manager
     'mlocate'                       # OPTIONAL: Quickly find files and directories
     'mpv'                           # OPTIONAL: Suckless video player
     'mtpfs'                         # OPTIONAL: File transfer for android devices
@@ -64,15 +61,12 @@ APPS=(
     'ttf-ubuntu-font-family'        # OPTIONAL: Ubuntu fonts
     'unrar'                         # OPTIONAL: Support for rar files
     'unzip'                         # OPTIONAL: Support for zip files
-    'wireplumber'                   # OPTIONAL: Session manager for Pipewire
+    #'wireplumber'                   # OPTIONAL: Session manager for Pipewire
     'xclip'                         # OPTIONAL: Copy to clipboard from CLI
     'zathura'                       # OPTIONAL: Document viewer
     'zathura-pdf-mupdf'             # OPTIONAL: PDF ePub and OpenXPS support for zathura
     'zenity'                        # OPTIONAL: Basic GUIs from CLI
     'zip'                           # OPTIONAL: Support for zip files
-    'zsh-autosuggestions'           # OPTIONAL: Suggest commands as you type for zsh
-    'zsh-syntax-highlighting'       # OPTIONAL: Syntax highlighting for zsh
-    'zsh-theme-powerlevel10k'       # OPTIONAL: Stylish prompt for zsh
 )
 
 GAMING_APPS=(
@@ -104,171 +98,9 @@ GPU_DRIVERS=()
 # DESKTOP ENVIRONMENTS #
 ########################
 ENVIRONMENTS=(
-    'AWESOME'
-    'BUDGIE'
-    'CINNAMON'
-    'DEEPIN'
-    'ENLIGHTENMENT'
-    'GNOME'
-    'KDE'
-    'LXQT'
-    'MATE'
-    'QTILE'
-    'XFCE'
+    'BSPWM'
 )
 
-AWESOME=(
-    'alacritty'
-    'awesome-git'
-    'breeze-gtk'
-    'dex'
-    'dunst'
-    'engrampa'
-    'feh'
-    'gnome-keyring'
-    'light'
-    'lightdm'
-    'lightdm-gtk-greeter'
-    'mate-polkit'
-    'mpd'
-    'papirus-icon-theme'
-    'picom-pijulius-git'
-    'rofi'
-    'thunar'
-    'wmctrl'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gtk'
-    'xorg-server'
-    'xorg-xrandr'
-)
-
-BUDGIE=(
-    'budgie-desktop'
-    'lightdm'
-    'lightdm-gtk-greeter'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gtk'
-    'xorg-server'
-)
-
-CINNAMON=(
-    'cinnamon'
-    'lightdm'
-    'lightdm-gtk-greeter'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gtk'
-    'xorg-server'
-)
-
-DEEPIN=(
-    'deepin'
-    'deepin-extra'
-    'lightdm'
-    'lightdm-gtk-greeter'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gtk'
-    'xorg-server'
-)
-
-ENLIGHTENMENT=(
-    'enlightenment'
-    'lightdm'
-    'lightdm-gtk-greeter'
-    'terminology'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gtk'
-    'xorg-server'
-)
-
-GNOME=(
-    'gdm'
-    'gnome'
-    'gnome-tweaks'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gnome'
-)
-
-KDE=(
-    'ark'
-    'dolphin'
-    'dolphin-plugins'
-    'ffmpegthumbs'
-    'filelight'
-    'gwenview'
-    'kcalc'
-    'kcharselect'
-    'kcolorchooser'
-    'kcron'
-    'kdeconnect'
-    'kdegraphics-thumbnailers'
-    'kdenetwork-filesharing'
-    'kdesdk-thumbnailers'
-    'kdialog'
-    'kmix'
-    'kolourpaint'
-    'konsole'
-    'kontrast'
-    'kwrite'
-    'okular'
-    'packagekit-qt5'
-    'plasma'
-    'print-manager'
-    'sddm'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-kde'
-)
-
-LXQT=(
-    'breeze-icons'
-    'lxqt'
-    'lxqt-connman-applet'
-    'sddm'
-    'slock'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-kde'
-)
-
-MATE=(
-    'lightdm'
-    'lightdm-gtk-greeter'
-    'mate'
-    'mate-extra'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gtk'
-    'xorg-server'
-)
-
-QTILE=(
-    'alacritty'
-    'breeze-gtk'
-    'dex'
-    'dunst'
-    'engrampa'
-    'feh'
-    'gnome-keyring'
-    'light'
-    'lightdm'
-    'lightdm-gtk-greeter'
-    'mate-polkit'
-    'mpd'
-    'papirus-icon-theme'
-    'picom'
-    'qtile'
-    'rofi'
-    'thunar'
-    'wmctrl'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gtk'
-    'xorg-server'
-    'xorg-xrandr'
-)
-
-XFCE=(
-    'lightdm'
-    'lightdm-gtk-greeter'
-    'xdg-desktop-portal'
-    'xdg-desktop-portal-gtk'
-    'xfce4'
-    'xfce4-goodies'
-    'xorg-server'
+BSPWM=(
+    
 )

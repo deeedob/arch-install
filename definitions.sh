@@ -92,18 +92,8 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
         WIFI=y
     fi
 
-
-    PS3="Choose your desktop environment: "
-    select DE in ${ENVIRONMENTS[@]}
-    do
-        if [ $DE ]; then
-            break
-        fi
-    done
-
     # this: "<<-" ignores indentation, but only for tab characters
     cat <<- EOL > vars.sh
-		export DE=$DE
 		export USR=$USR
 		export PASSWD=$PASSWD
 		export HOSTNAME=$HOSTNAME
@@ -295,7 +285,7 @@ install_base() {
 ###########
 setup_network() {
     # timezone
-    ln -sfv /usr/share/zoneinfo/America/Argentina/Buenos_Aires /etc/localtime
+    ln -sfv /usr/share/zoneinfo/Europe/Berlin /etc/localtime
 
     configure_locale
 
@@ -313,7 +303,7 @@ setup_network() {
 
 configure_locale() {
     sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
-    sed -i 's/^#es_AR.UTF-8 UTF-8/es_AR.UTF-8 UTF-8/' /etc/locale.gen
+    sed -i 's/^#es_AR.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
 
     locale-gen
 
@@ -339,17 +329,18 @@ prepare_system() {
 
     install_cpu_ucode
 
-    # install grub
+    # install bootloader
     if [ "$UEFI" == y ]; then
-        grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Arch
+        pacman -S refind
+        refind-isntall
     elif [ "$UEFI" == n ]; then
         grub-install --target=i386-pc $ROOT_DEVICE
+        # configure grub
+        echo -e '\nGRUB_DISABLE_OS_PROBER=false\n' >> /etc/default/grub
+        grub-mkconfig -o /boot/grub/grub.cfg
     fi
 
-    # configure grub
-    echo -e '\nGRUB_DISABLE_OS_PROBER=false\n' >> /etc/default/grub
-    grub-mkconfig -o /boot/grub/grub.cfg
-}
+    }
 
 install_cpu_ucode() {
     CPU=$(lscpu | awk '/Vendor ID:/ {print $3}')
@@ -386,48 +377,8 @@ prepare_gui() {
     # and set up the DE variable
     case $DE in
 
-        AWESOME)
-            DE=${AWESOME[@]}
-            SERVICES+=('lightdm')
-            ;;
-        BUDGIE)
-            DE=${BUDGIE[@]}
-            SERVICES+=('lightdm')
-            ;;
-        CINNAMON)
-            DE=${CINNAMON[@]}
-            SERVICES+=('lightdm')
-            ;;
-        DEEPIN)
-            DE=${DEEPIN[@]}
-            SERVICES+=('lightdm')
-            ;;
-        ENLIGHTENMENT)
-            DE=${ENLIGHTENMENT[@]}
-            SERVICES+=('lightdm')
-            ;;
-        GNOME)
-            DE=${GNOME[@]}
-            SERVICES+=('gdm')
-            ;;
-        KDE)
-            DE=${KDE[@]}
-            SERVICES+=('sddm')
-            ;;
-        LXQT)
-            DE=${LXQT[@]}
-            SERVICES+=('sddm')
-            ;;
-        MATE)
-            DE=${MATE[@]}
-            SERVICES+=('lightdm')
-            ;;
-        QTILE)
-            DE=${QTILE[@]}
-            SERVICES+=('lightdm')
-            ;;
-        XFCE)
-            DE=${XFCE[@]}
+        BSPWM)
+            DE=${BSPWM[@]}
             SERVICES+=('lightdm')
             ;;
     esac
@@ -520,10 +471,10 @@ install_dotfiles() {
     # it's needed to have a directory to drop some configs
     sudo su ${USR} -s /bin/zsh -lc "timeout 1s firefox --headless"
 
-    git clone https://github.com/tralph3/.dotfiles ${USR_HOME}/.dotfiles
-    chmod +x ${USR_HOME}/.dotfiles/install.sh
+    git clone https://github.com/deeedob/ddob-dotfiles ${USR_HOME}/.dotfiles
+    chmod +x ${USR_HOME}/.dotfiles/install
     chown -R ${USR}:${USR} ${USR_HOME}
-    sudo -u ${USR} ${USR_HOME}/.dotfiles/install.sh --noconfirm
+    sudo -u ${USR} ${USR_HOME}/.dotfiles/install
 
     # neovim config installs plugins if missing automatically
     sudo -u ${USR} nvim --headless
