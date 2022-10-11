@@ -27,42 +27,41 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     done
 
     #specify root size
-    SZR_=$(lsblk | grep $ROOT_DEVICE | awk '{print $4}')
-    RD_=$(echo ${SZR_} | sed 's|[G]||g')
+    SZR_=$(lsblk | grep $ROOT_DEVICE | awk '{print $4}' | sed 's|[G]||g')
     echo "Select the root size"
-    echo "Available ${SZR_}"
+    echo "Available ${SZR_} G"
     read "ROOT_SIZE?ROOT size: "
-    RDU_=$(echo ${ROOT_SIZE} | sed 's|[G]||g')
-    SZL_=$((RD_ - RDU_))
-    echo "Available Disk Space: ${SZL_}"
+    SZU_=$(echo ${ROOT_SIZE} | sed 's|[G]||g')
+    LEFT_SIZE=$((SZR_ - SZU_))
+    echo "Available Disk Space: ${LEFT_SIZE}"
 
     PS3="Do you want a SWAP partition?"
     select PART_SWAP in "Yes" "No"
     do
         if [ $PART_SWAP ]; then
             MEMTOTAL_=$(numfmt --field=2 --from-unit=1024 --to=iec-i --suffix B < /proc/meminfo  | sed 's/ kB//' | sed 's|[GiB]||g' | head -n4 | grep "MemTotal" | awk '{printf("%.0f\n",$2)}')
-            echo "Your Device MemTotal is: $MEMTOTAL_ GiB"
-            if (( $MEMTOTAL_ < 2)); then
+            echo "Your Device MemTotal is: ${MEMTOTAL_}GiB"
+            if [ $MEMTOTAL_ -le 2 ]; then
                 echo "Recommended Swap Space: $((2*MEMTOTAL_))"
                 echo "Recommended Swap Space with hibernation: $((3*MEMTOTAL_))"
-                break
             fi
-            if (( $MEMTOTAL_ > 2)) && (( $MEMTOTAL_ < 8)); then
+            if [ $MEMTOTAL_ -gt 2 ] && [ $MEMTOTAL_ -le 8 ]; then
                 echo "Recommended Swap Space: $((MEMTOTAL_))"
                 echo "Recommended Swap Space with hibernation: $((2*MEMTOTAL_))"
-                break
             fi
-            if (( $MEMTOTAL_ > 8)) && (( $MEMTOTAL_ < 64)); then
-                echo "Recommended Swap Space: 4G - $((0.5*MEMTOTAL_))"
+            if [ $MEMTOTAL_ -gt 8 ] && [ $MEMTOTAL_ -le 64 ]; then
+                echo "Recommended Swap Space: 4 - $((0.5*MEMTOTAL_))"
                 echo "Recommended Swap Space with hibernation: $((1.5*MEMTOTAL_))"
-                break
             fi
-            if (( $MEMTOTAL_ > 64)); then
+            if [ $MEMTOTAL_ -gt 64 ]; then
                 echo "Recommended Swap Space: min of 4G"
                 echo "Recommended Swap Space with hibernation: not recommended!"
-                break
             fi
             read "SWAP_SIZE?SWAP size: "
+
+            LEFT_SIZE=$((LEFT_SIZE - SWAP_SIZE))
+            echo "remaining space on /dev/${ROOT_DEVICE}: ${LEFT_SIZE}"
+            break;
         fi
     done
 
@@ -81,14 +80,6 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
 
     read "HOSTNAME?Enter this machine's hostname: "
 
-    PS3="Do you want to install applications for gaming?: "
-    select GAMING in "Yes" "No"
-    do
-        if [ $GAMING ]; then
-            break
-        fi
-    done
-
     PS3="Do you want to install dotfiles?: "
     select DOTFILES in "Yes" "No"
     do
@@ -104,11 +95,14 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
 
     # this: "<<-" ignores indentation, but only for tab characters
     cat <<- EOL > vars.sh
+        export ROOT_SIZE=$ROOT_SIZE
+		export SWAP_SIZE=$SWAP_SIZE
+		export LEFT_SIZE=$LEFT_SIZE
+        export PART_SWAP=$PART_SWAP
 		export USR=$USR
 		export PASSWD=$PASSWD
 		export HOSTNAME=$HOSTNAME
 		export WIFI=$WIFI
-		export GAMING=$GAMING
 		export DOTFILES=$DOTFILES
 	EOL
 
@@ -123,15 +117,16 @@ print_summary() {
     # set text to bold red
     echo "\x1b[1;33m"
     echo "The installer will erase all data on the \x1b[1;31m$ROOT_DEVICE\x1b[1;33m drive\x1b[0m"
+    echo "The root partition will be $ROOT_SIZE big"
 
-    if [ $STRG_DEVICE ]; then
-        echo "It will use \x1b[1;33m$STRG_DEVICE\x1b[0m as a storage medium and mount it on \x1b[1;33m/mnt/Storage\x1b[0m"
+    if [ "${PART_SWAP}" = "Yes" ]; then
+        echo "The swap partition will be $SWAP_SIZE big"
+    else
+        echo "no swap"
     fi
 
+    echo "The home partition will be ${LEFT_SIZE} bug"
 
-    if [ $WIN_DEVICE ]; then
-        echo "It will use \x1b[1;33m$WIN_DEVICE\x1b[0m as a Windows partition and mount it on \x1b[1;33m/mnt/Windows\x1b[0m"
-    fi
 
     echo "Your username will be \x1b[1;33m$USR\x1b[0m"
 
