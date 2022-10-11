@@ -26,41 +26,55 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
         fi
     done
 
+    PS3="Do you want an encrypted drive?"
+    select ENCRYPT_DRIVE in "Yes" "No"
+    do
+        if [ $ENCRYPT_DRIVE ]; then
+            break
+        fi
+    done
+
     #specify root size
-    SZR_=$(lsblk | grep $ROOT_DEVICE | awk '{print $4}' | sed 's|[G]||g')
+    SZR_=$(lsblk | grep $ROOT_DEVICE | head -n1 | awk '{print $4}' | sed 's|[GiB]||g')
     echo "Select the root size"
     echo "Available ${SZR_} G"
-    read "ROOT_SIZE?ROOT size: "
-    SZU_=$(echo ${ROOT_SIZE} | sed 's|[G]||g')
-    LEFT_SIZE=$((SZR_ - SZU_))
-    echo "Available Disk Space: ${LEFT_SIZE}"
+    read "ROOT_SIZE?ROOT size {G,GiB}: "
+    SZU_=$(echo ${ROOT_SIZE} | sed 's|[GiB]||g')
+    HOME_SIZE=$((SZR_ - SZU_))
+    echo "Available Disk Space: ${HOME_SIZE}G"
 
     PS3="Do you want a SWAP partition?"
     select PART_SWAP in "Yes" "No"
     do
         if [ $PART_SWAP ]; then
             MEMTOTAL_=$(numfmt --field=2 --from-unit=1024 --to=iec-i --suffix B < /proc/meminfo  | sed 's/ kB//' | sed 's|[GiB]||g' | head -n4 | grep "MemTotal" | awk '{printf("%.0f\n",$2)}')
-            echo "Your Device MemTotal is: ${MEMTOTAL_}GiB"
+            echo
+            echo "\x1b[33m"
+            # show the tip in yellow
+
+            echo "Your Device MemTotal is: ${MEMTOTAL_}G"
             if [ $MEMTOTAL_ -le 2 ]; then
-                echo "Recommended Swap Space: $((2*MEMTOTAL_))"
-                echo "Recommended Swap Space with hibernation: $((3*MEMTOTAL_))"
+                echo "Recommended Swap Space: $((2*MEMTOTAL_))G"
+                echo "Recommended Swap Space with hibernation: $((3*MEMTOTAL_))G"
             fi
             if [ $MEMTOTAL_ -gt 2 ] && [ $MEMTOTAL_ -le 8 ]; then
-                echo "Recommended Swap Space: $((MEMTOTAL_))"
-                echo "Recommended Swap Space with hibernation: $((2*MEMTOTAL_))"
+                echo "Recommended Swap Space: $((MEMTOTAL_))G"
+                echo "Recommended Swap Space with hibernation: $((2*MEMTOTAL_))G"
             fi
             if [ $MEMTOTAL_ -gt 8 ] && [ $MEMTOTAL_ -le 64 ]; then
-                echo "Recommended Swap Space: 4 - $((0.5*MEMTOTAL_))"
-                echo "Recommended Swap Space with hibernation: $((1.5*MEMTOTAL_))"
+                echo "Recommended Swap Space: 4G - $((0.5*MEMTOTAL_))G"
+                echo "Recommended Swap Space with hibernation: $((1.5*MEMTOTAL_))G"
             fi
             if [ $MEMTOTAL_ -gt 64 ]; then
                 echo "Recommended Swap Space: min of 4G"
                 echo "Recommended Swap Space with hibernation: not recommended!"
             fi
-            read "SWAP_SIZE?SWAP size: "
-
-            LEFT_SIZE=$((LEFT_SIZE - SWAP_SIZE))
-            echo "remaining space on /dev/${ROOT_DEVICE}: ${LEFT_SIZE}"
+            echo "\x1b[0m"
+            echo
+            read "SWAP_SIZE?SWAP size {G,GiB}: "
+            SWAP_SIZE_=$(echo $SWAP_SIZE | sed 's|[GiB]||g')
+            HOME_SIZE=$((HOME_SIZE - SWAP_SIZE_))
+            echo "remaining space on /dev/${ROOT_DEVICE}: ${HOME_SIZE}G"
             break;
         fi
     done
@@ -95,9 +109,10 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
 
     # this: "<<-" ignores indentation, but only for tab characters
     cat <<- EOL > vars.sh
+        export ENCRYPT_DRIVE=$ENCRYPT_DRIVE
         export ROOT_SIZE=$ROOT_SIZE
 		export SWAP_SIZE=$SWAP_SIZE
-		export LEFT_SIZE=$LEFT_SIZE
+		export HOME_SIZE=$HOME_SIZE
         export PART_SWAP=$PART_SWAP
 		export USR=$USR
 		export PASSWD=$PASSWD
@@ -117,28 +132,28 @@ print_summary() {
     # set text to bold red
     echo "\x1b[1;33m"
     echo "The installer will erase all data on the \x1b[1;31m$ROOT_DEVICE\x1b[1;33m drive\x1b[0m"
-    echo "The root partition will be $ROOT_SIZE big"
+    echo 
 
-    if [ "${PART_SWAP}" = "Yes" ]; then
-        echo "The swap partition will be $SWAP_SIZE big"
+    if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
+        echo "With \x1b[1;33mencrypted drive\x1b[0m"
     else
-        echo "no swap"
+        echo "You \x1b[1;33mWILL NOT\x1b[0m have disk-encryption"
     fi
 
-    echo "The home partition will be ${LEFT_SIZE} bug"
+    echo "The root partition will be \x1b[1;33m$ROOT_SIZE big\x1b[0m"
+
+    if [ "${PART_SWAP}" = "Yes" ]; then
+        echo "The swap partition will be \x1b[1;33m$SWAP_SIZE big\x1b[0m"
+    else
+        echo "\x1b[1;33mno swap\x1b[0m"
+    fi
+
+    echo "The home partition will be \x1b[1;33m${HOME_SIZE}G big\x1b[0m"
 
 
     echo "Your username will be \x1b[1;33m$USR\x1b[0m"
 
     echo "The machine's hostname will be \x1b[1;33m$HOSTNAME\x1b[0m"
-
-    echo "Your Deskop Environment will be \x1b[1;33m$DE\x1b[0m"
-
-    if [ "${GAMING}" = "Yes" ]; then
-        echo "You \x1b[1;33mWILL\x1b[0m install gaming packages"
-    else
-        echo "You \x1b[1;33mWILL NOT\x1b[0m install gaming packages"
-    fi
 
     if [ "${DOTFILES}" = "Yes" ]; then
         echo "You \x1b[1;33mWILL\x1b[0m install dotfiles"
@@ -189,19 +204,49 @@ partition_and_mount_uefi() {
     wipefs --all --force $ROOT_DEVICE
     # cut removes comments from heredoc
     # this: "<<-" ignores indentation, but only for tab characters
-    cut -d " " -f 1 <<- EOL | fdisk --wipe always --wipe-partitions always $ROOT_DEVICE
+    if [ "${PART_SWAP}" = "Yes" ]; then
+        echo "WITH SWAP"
+    cut -d " " -f 1 <<- EOL | fdisk --wipe always --wipe-partitions always /dev/$ROOT_DEVICE
 		g           # gpt partition scheme
 		n           # new partition
-		            # partition number 1
+		            # partition number 1 - BOOT
 		            # start of sector
-		+512MB      # plus 512MB
+		+512MiB     # plus 512MB
+		n           # new partition
+		            # partition number 2 - SWAP
+		            # start of sector
+		+$SWAP_SIZE # plus 512MB
 		n           # new parition
-		            # partition number 2
+		            # partition number 2 - ROOT
 		            # start of sector
-		            # end of sector
+		+$ROOT_SIZE # end of sector
+		n           # new parition
+		            # partition number 3 - HOME
+		            # start of sector
+		+$HOME_SIZE # end of sector
 		w           # write
 	EOL
+    else
+    cut -d " " -f 1 <<- EOL | fdisk --wipe always --wipe-partitions always /dev/$ROOT_DEVICE
+		g           # gpt partition scheme
+		n           # new partition
+		            # partition number 1 - BOOT
+		            # start of sector
+		+512MiB     # plus 512MB
+		n           # new parition
+		            # partition number 2 - ROOT
+		            # start of sector
+		+$ROOT_SIZE # end of sector
+		n           # new parition
+		            # partition number 3 - HOME
+		            # start of sector
+		+$HOME_SIZE # end of sector
+		w           # write
+	EOL
+    fi
 
+    
+    break
     # get partition names
     PARTITIONS=($(for PARTITION in $(dirname /sys/block/$(basename $ROOT_DEVICE)/*/partition); do
         basename $PARTITION
