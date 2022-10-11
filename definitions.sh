@@ -26,7 +26,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
         fi
     done
 
-    PS3="Do you want an encrypted drive?"
+    PS3="Do you want an encrypted drive? "
     select ENCRYPT_DRIVE in "Yes" "No"
     do
         if [ $ENCRYPT_DRIVE ]; then
@@ -43,10 +43,10 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     HOME_SIZE=$((SZR_ - SZU_))
     echo "Available Disk Space: ${HOME_SIZE}G"
 
-    PS3="Do you want a SWAP partition?"
+    PS3="Do you want a SWAP partition? "
     select PART_SWAP in "Yes" "No"
     do
-        if [ $PART_SWAP ]; then
+        if [ ${PART_SWAP} = "Yes" ]; then
             MEMTOTAL_=$(numfmt --field=2 --from-unit=1024 --to=iec-i --suffix B < /proc/meminfo  | sed 's/ kB//' | sed 's|[GiB]||g' | head -n4 | grep "MemTotal" | awk '{printf("%.0f\n",$2)}')
             echo
             echo "\x1b[33m"
@@ -75,6 +75,8 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
             SWAP_SIZE_=$(echo $SWAP_SIZE | sed 's|[GiB]||g')
             HOME_SIZE=$((HOME_SIZE - SWAP_SIZE_))
             echo "remaining space on /dev/${ROOT_DEVICE}: ${HOME_SIZE}G"
+            break;
+        else
             break;
         fi
     done
@@ -108,6 +110,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     fi
 
     # this: "<<-" ignores indentation, but only for tab characters
+    ROOT_DEVICE="/dev/${ROOT_DEVICE}"
     cat <<- EOL > vars.sh
 		export ENCRYPT_DRIVE=$ENCRYPT_DRIVE
 		export ROOT_SIZE=$ROOT_SIZE
@@ -205,7 +208,6 @@ partition_and_mount_uefi() {
     # cut removes comments from heredoc
     # this: "<<-" ignores indentation, but only for tab characters
     if [ "${PART_SWAP}" = "Yes" ]; then
-        echo "WITH SWAP"
     cut -d " " -f 1 <<- EOL | fdisk --wipe always --wipe-partitions always /dev/$ROOT_DEVICE
 		g           # gpt partition scheme
 		n           # new partition
@@ -245,32 +247,35 @@ partition_and_mount_uefi() {
 	EOL
     fi
 
-    
-    break
     # get partition names
     PARTITIONS=($(for PARTITION in $(dirname /sys/block/$(basename $ROOT_DEVICE)/*/partition); do
         basename $PARTITION
     done))
 
-    # partition formatting
-    mkfs.fat -F 32 /dev/$PARTITIONS[1]     # boot
-    mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT  # root
+    if [ "${PART_SWAP}" = "Yes" ]; then
+        # partition formatting for swap
+        mkfs.fat -F 32 /dev/$PARTITIONS[1]     # boot
+        mkswap /dev/$PARTITIONS[2] -L SWAP     # swap
+        mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT  # root
+        mkfs.ext4 /dev/$PARTITIONS[4] -L HOME  # home
+    
+        # mount partitions
+        mkdir -pv /mnt
+        mount /dev/$PARTITIONS[3] /mnt
+        mount --mkdir /dev/$PARTITIONS[1] /mnt/boot
+        mount --mkdir /dev/$PARTITIONS[4] /mnt/home
+        swapon /dev/$PARTITIONS[2]
+    else
+        # partition formatting
+        mkfs.fat -F 32 /dev/$PARTITIONS[1]     # boot
+        mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT  # root
+        mkfs.ext4 /dev/$PARTITIONS[3] -L HOME  # home
 
-    # mount partitions
-    mkdir -pv /mnt
-    mount /dev/$PARTITIONS[2] /mnt
-
-    mkdir -pv /mnt/boot
-    mount /dev/$PARTITIONS[1] /mnt/boot
-
-    if [ $STRG_DEVICE ]; then
-        mkdir -pv /mnt/mnt/Storage
-        mount ${STRG_DEVICE} /mnt/mnt/Storage
-    fi
-
-    if [ $WIN_DEVICE ]; then
-        mkdir -pv /mnt/mnt/Windows
-        mount ${WIN_DEVICE} /mnt/mnt/Windows
+        # mount partitions
+        mkdir -pv /mnt
+        mount /dev/$PARTITIONS[2] /mnt
+        mount --mkdir /dev/$PARTITIONS[1] /mnt/boot
+        mount --mkdir /dev/$PARTITIONS[3] /mnt/home
     fi
 
     # get mirrors
