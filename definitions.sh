@@ -109,11 +109,11 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
 
     # this: "<<-" ignores indentation, but only for tab characters
     cat <<- EOL > vars.sh
-        export ENCRYPT_DRIVE=$ENCRYPT_DRIVE
-        export ROOT_SIZE=$ROOT_SIZE
+		export ENCRYPT_DRIVE=$ENCRYPT_DRIVE
+		export ROOT_SIZE=$ROOT_SIZE
 		export SWAP_SIZE=$SWAP_SIZE
 		export HOME_SIZE=$HOME_SIZE
-        export PART_SWAP=$PART_SWAP
+		export PART_SWAP=$PART_SWAP
 		export USR=$USR
 		export PASSWD=$PASSWD
 		export HOSTNAME=$HOSTNAME
