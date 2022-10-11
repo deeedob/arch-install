@@ -21,40 +21,20 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     select drive in $(lsblk | sed '/\(^├\|^└\|^NAME\)/d' | cut -d " " -f 1)
     do
         if [ $drive ]; then
-            export ROOT_DEVICE="/dev/$drive"
+            export ROOT_DEVICE="$drive"
             break
         fi
     done
 
-    PS3="Choose your Windows partition to setup dual-boot: "
-
-    select drive in $(lsblk | sed '/\(^├\|^└\)/!d' | cut -d " " -f 1 | cut -c7-) "None"
-    do
-        if [ "$drive" = "None" ]; then
-            unset WIN_DEVICE
-            break
-        fi
-
-        if [ $drive ]; then
-            export WIN_DEVICE="/dev/$drive"
-            break
-        fi
-    done
-
-    PS3="Choose an extra partition to use as Storage: "
-
-    select drive in $(lsblk | sed '/\(^├\|^└\)/!d' | cut -d " " -f 1 | cut -c7-) "None"
-    do
-        if [ "$drive" = "None" ]; then
-            unset STRG_DEVICE
-            break
-        fi
-
-        if [ $drive ]; then
-            export STRG_DEVICE="/dev/$drive"
-            break
-        fi
-    done
+    #specify root size
+    SZR_=$(lsblk | grep $ROOT_DEVICE | awk '{print $4}')
+    RD_=$(echo ${SZR_} | sed 's|[G]||g')
+    echo "Select the root size"
+    echo "Available: ${SZR_}"
+    read "ROOT_SIZE?root size: "
+    RDU_=$(echo ${ROOT_SIZE} | sed 's|[G]||g')
+    SZL_=$((RD_) - (RDU_))
+    echo "Available Disk Space: ${SZL_}"
 
     read "USR?Enter your username: "
     while
