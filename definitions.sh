@@ -223,7 +223,7 @@ partition_and_mount_uefi() {
 		n           # new parition
 		            # partition number 3 - HOME
 		            # start of sector
-		+$HOME_SIZE # end of sector
+		            # end of sector
 		w           # write
 	EOL
     else
@@ -240,7 +240,7 @@ partition_and_mount_uefi() {
 		n           # new parition
 		            # partition number 3 - HOME
 		            # start of sector
-		+$HOME_SIZE # end of sector
+		            # end of sector
 		w           # write
 	EOL
     fi
