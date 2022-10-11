@@ -30,11 +30,41 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     SZR_=$(lsblk | grep $ROOT_DEVICE | awk '{print $4}')
     RD_=$(echo ${SZR_} | sed 's|[G]||g')
     echo "Select the root size"
-    echo "Available: ${SZR_}"
-    read "ROOT_SIZE?root size: "
+    echo "Available ${SZR_}"
+    read "ROOT_SIZE?ROOT size: "
     RDU_=$(echo ${ROOT_SIZE} | sed 's|[G]||g')
-    SZL_=$((RD_) - (RDU_))
+    SZL_=$((RD_ - RDU_))
     echo "Available Disk Space: ${SZL_}"
+
+    PS3="Do you want a SWAP partition?"
+    select PART_SWAP in "Yes" "No"
+    do
+        if [ $PART_SWAP ]; then
+            MEMTOTAL_=$(numfmt --field=2 --from-unit=1024 --to=iec-i --suffix B < /proc/meminfo  |\n  sed 's/ kB//' | head -n4 | grep "MemTotal" | awk '{print $2}')
+            echo "Your Device MemTotal is: $MEMTOTAL_ GiB"
+            if (( $MEMTOTAL_ < 2)); then
+                echo "Recommended Swap Space: $((2*MEMTOTAL_))"
+                echo "Recommended Swap Space with hibernation: $((3*MEMTOTAL_))"
+                break
+            fi
+            if (( $MEMTOTAL_ > 2)) && (( $MEMTOTAL_ < 8)); then
+                echo "Recommended Swap Space: $((MEMTOTAL_))"
+                echo "Recommended Swap Space with hibernation: $((2*MEMTOTAL_))"
+                break
+            fi
+            if (( $MEMTOTAL_ > 8)) && (( $MEMTOTAL_ < 64)); then
+                echo "Recommended Swap Space: 4G - $((0.5*MEMTOTAL_))"
+                echo "Recommended Swap Space with hibernation: $((1.5*MEMTOTAL_))"
+                break
+            fi
+            if (( $MEMTOTAL_ > 64)); then
+                echo "Recommended Swap Space: min of 4G"
+                echo "Recommended Swap Space with hibernation: not recommended!"
+                break
+            fi
+            read "SWAP_SIZE?SWAP size: "
+        fi
+    done
 
     read "USR?Enter your username: "
     while
