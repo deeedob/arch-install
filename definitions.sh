@@ -40,7 +40,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     select PART_SWAP in "Yes" "No"
     do
         if [ $PART_SWAP ]; then
-            MEMTOTAL_=$(numfmt --field=2 --from-unit=1024 --to=iec-i --suffix B < /proc/meminfo  | sed 's/ kB//' | sed 's|[GiB]||g' | head -n4 | grep "MemTotal" | awk '{print $2}')
+            MEMTOTAL_=$(numfmt --field=2 --from-unit=1024 --to=iec-i --suffix B < /proc/meminfo  | sed 's/ kB//' | sed 's|[GiB]||g' | head -n4 | grep "MemTotal" | awk '{printf("%.0f\n",$2)}')
             echo "Your Device MemTotal is: $MEMTOTAL_ GiB"
             if (( $MEMTOTAL_ < 2)); then
                 echo "Recommended Swap Space: $((2*MEMTOTAL_))"
