@@ -92,15 +92,3 @@ SERVICES=(
 
 # this will get populated automatically
 GPU_DRIVERS=()
-
-
-########################
-# DESKTOP ENVIRONMENTS #
-########################
-ENVIRONMENTS=(
-    'BSPWM'
-)
-
-BSPWM=(
-    
-)

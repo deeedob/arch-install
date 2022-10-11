@@ -112,6 +112,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     # this: "<<-" ignores indentation, but only for tab characters
     ROOT_DEVICE="/dev/${ROOT_DEVICE}"
     cat <<- EOL > vars.sh
+		export ROOT_DEVICE=$ROOT_DEVICE
 		export ENCRYPT_DRIVE=$ENCRYPT_DRIVE
 		export ROOT_SIZE=$ROOT_SIZE
 		export SWAP_SIZE=$SWAP_SIZE
@@ -326,12 +327,7 @@ partition_and_mount_bios() {
 install_base() {
     pacstrap /mnt ${BASE[*]}
     reflector > /mnt/etc/pacman.d/mirrorlist
-    genfstab -U /mnt | awk '{
-        if($2 == "/mnt/Windows" || $2 == "/mnt/Storage") {
-            $4 = $4",nofail"
-        }
-        print
-    }' >> /mnt/etc/fstab
+    genfstab -U /mnt >> /mnt/etc/fstab
 }
 
 
@@ -421,22 +417,6 @@ setup_users() {
     echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/wheel_sudo
     # add insults to injury
     echo 'Defaults insults' > /etc/sudoers.d/insults
-}
-
-
-#######
-# GUI #
-#######
-prepare_gui() {
-    # add the default DM to the list of services to be enabled
-    # and set up the DE variable
-    case $DE in
-
-        BSPWM)
-            DE=${BSPWM[@]}
-            SERVICES+=('lightdm')
-            ;;
-    esac
 }
 
 
