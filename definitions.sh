@@ -441,7 +441,7 @@ install_applications() {
     fi
 
     # install user applications
-    sudo su ${USR} -s /bin/zsh -lc "$ins ${APPS[*]}"
+    #sudo su ${USR} -s /bin/zsh -lc "$ins ${APPS[*]}"
 
     if [ "${DOTFILES}" == "Yes" ]; then
         install_dotfiles
@@ -508,7 +508,7 @@ install_dotfiles() {
     sudo -u ${USR} ${USR_HOME}/.dotfiles/install
 
     # neovim config installs plugins if missing automatically
-    sudo -u ${USR} nvim --headless
+    #sudo -u ${USR} nvim --headless
 }
 
 
