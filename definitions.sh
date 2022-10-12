@@ -395,6 +395,9 @@ prepare_system() {
     if [ "$UEFI" == y ]; then
         pacman --needed --noconfirm -S refind
         refind-install
+        rm -f /boot/refind_linux.conf
+        RUUID_=$(blkid $ROOT_DEVICE | grep -Pwo 'UUID="\K[^"]*')
+        echo "\"Boot with standard options\" \"root=UUID=${RUUID_} rw quiet splash button.lid_init_state=open acpi_backlight=vendor\"" > /boot/refind_linux.conf
     elif [ "$UEFI" == n ]; then
         pacman --needed --noconfirm -S grub
         grub-install --target=i386-pc $ROOT_DEVICE
@@ -533,4 +536,13 @@ enable_services() {
         systemctl enable $service
     done
 }
+
+#################
+# CUSTOMIZATION #
+#################
+
+customization() {
+    plymouth-set-default-theme -R lone
+}
+
 
