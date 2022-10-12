@@ -235,7 +235,7 @@ partition_and_mount_uefi() {
 		19          # type Linux swap
 		t           # partition type
 		3           # partition number 3 - ROOT
-        23          # type Linux root (x86-64)
+		23          # type Linux root (x86-64)
 		t           # partition type
 		4           # partition number 4 - HOME
 		41          # type Linux home
@@ -261,7 +261,7 @@ partition_and_mount_uefi() {
 		1           # type UEFI
 		t           # partition type
 		2           # partition number 2 - ROOT
-        23          # type Linux root (x86-64)
+		23          # type Linux root (x86-64)
 		t           # partition type
 		4           # partition number 3 - HOME
 		41          # type Linux home
