@@ -227,6 +227,18 @@ partition_and_mount_uefi() {
 		            # partition number 3 - HOME
 		            # start of sector
 		            # end of sector
+		t           # partition type
+		1           # partition number 1 - BOOT
+		1           # type UEFI
+		t           # partition type
+		2           # partition number 2 - SWAP
+		19          # type Linux swap
+		t           # partition type
+		3           # partition number 3 - ROOT
+        23          # type Linux root (x86-64)
+		t           # partition type
+		4           # partition number 4 - HOME
+		41          # type Linux home
 		w           # write
 	EOL
     else
@@ -244,6 +256,15 @@ partition_and_mount_uefi() {
 		            # partition number 3 - HOME
 		            # start of sector
 		            # end of sector
+		t           # partition type
+		1           # partition number 1 - BOOT
+		1           # type UEFI
+		t           # partition type
+		2           # partition number 3 - ROOT
+        23          # type Linux root (x86-64)
+		t           # partition type
+		4           # partition number 4 - HOME
+		41          # type Linux home
 		w           # write
 	EOL
     fi
@@ -308,16 +329,6 @@ partition_and_mount_bios() {
     # mount partitions
     mkdir -pv /mnt
     mount  /dev/$PARTITIONS[1] /mnt
-
-    if [ $STRG_DEVICE ]; then
-        mkdir -pv /mnt/mnt/Storage
-        mount ${STRG_DEVICE} /mnt/mnt/Storage
-    fi
-
-    if [ $WIN_DEVICE ]; then
-        mkdir -pv /mnt/mnt/Windows
-        mount ${WIN_DEVICE} /mnt/mnt/Windows
-    fi
 
     # get mirrors
     reflector > /etc/pacman.d/mirrorlist
