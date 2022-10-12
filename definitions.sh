@@ -393,9 +393,10 @@ prepare_system() {
 
     # install bootloader
     if [ "$UEFI" == y ]; then
-        pacman -S refind
+        pacman --needed --noconfirm -S refind
         refind-install
     elif [ "$UEFI" == n ]; then
+        pacman --needed --noconfirm -S grub
         grub-install --target=i386-pc $ROOT_DEVICE
         # configure grub
         echo -e '\nGRUB_DISABLE_OS_PROBER=false\n' >> /etc/default/grub
