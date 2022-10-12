@@ -383,7 +383,7 @@ prepare_system() {
     # install bootloader
     if [ "$UEFI" == y ]; then
         pacman -S refind
-        refind-isntall
+        refind-install
     elif [ "$UEFI" == n ]; then
         grub-install --target=i386-pc $ROOT_DEVICE
         # configure grub
@@ -442,10 +442,6 @@ install_applications() {
 
     # install user applications
     sudo su ${USR} -s /bin/zsh -lc "$ins ${APPS[*]}"
-
-    if [ "${GAMING}" == "Yes" ]; then
-        sudo su ${USR} -s /bin/zsh -lc "$ins ${GAMING_APPS[*]}"
-    fi
 
     if [ "${DOTFILES}" == "Yes" ]; then
         install_dotfiles
