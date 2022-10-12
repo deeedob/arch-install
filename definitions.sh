@@ -263,7 +263,7 @@ partition_and_mount_uefi() {
 		2           # partition number 2 - ROOT
 		23          # type Linux root (x86-64)
 		t           # partition type
-		4           # partition number 3 - HOME
+		3           # partition number 3 - HOME
 		41          # type Linux home
 		w           # write
 	EOL
