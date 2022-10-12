@@ -209,7 +209,7 @@ partition_and_mount_uefi() {
     # cut removes comments from heredoc
     # this: "<<-" ignores indentation, but only for tab characters
     if [ "${PART_SWAP}" = "Yes" ]; then
-    cut -d " " -f 1 <<- EOL | fdisk --wipe always --wipe-partitions always /dev/$ROOT_DEVICE
+    cut -d " " -f 1 <<- EOL | fdisk --wipe always --wipe-partitions always $ROOT_DEVICE
 		g           # gpt partition scheme
 		n           # new partition
 		            # partition number 1 - BOOT
@@ -230,7 +230,7 @@ partition_and_mount_uefi() {
 		w           # write
 	EOL
     else
-    cut -d " " -f 1 <<- EOL | fdisk --wipe always --wipe-partitions always /dev/$ROOT_DEVICE
+    cut -d " " -f 1 <<- EOL | fdisk --wipe always --wipe-partitions always $ROOT_DEVICE
 		g           # gpt partition scheme
 		n           # new partition
 		            # partition number 1 - BOOT
