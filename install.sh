@@ -30,6 +30,7 @@ prepare_system
 setup_users
 install_applications
 enable_services
+customization
 exit
 EOF
 

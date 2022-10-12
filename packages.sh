@@ -29,8 +29,6 @@ BASE_APPS=(
     'wget'                          # OPTIONAL: Utility to download files
     'xdg-user-dirs'                 # OPTIONAL: Manager for user directories
     'zsh'                           # OPTIONAL: An alternate shell to bash
-    'plymouth-git'                  # OPTIONAL: boot animation
-    'plymouth-theme-lone-git'       # DEPENDENCY: plymouth-git
 )
 
 # user applications

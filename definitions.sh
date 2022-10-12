@@ -448,7 +448,7 @@ install_applications() {
     install_paru
 
     # install the chosen DE and GPU drivers
-    sudo su ${USR} -s /bin/zsh -lc "$ins ${DE[*]}"
+    #sudo su ${USR} -s /bin/zsh -lc "$ins ${DE[*]}"
 
     detect_drivers
     if [ $GPU_DRIVERS ]; then
@@ -457,6 +457,7 @@ install_applications() {
 
     # install user applications
     #sudo su ${USR} -s /bin/zsh -lc "$ins ${APPS[*]}"
+    paru --noconfirm -S plymouth-git plymouth-theme-lone-git
 
     if [ "${DOTFILES}" == "Yes" ]; then
         install_dotfiles
@@ -517,7 +518,7 @@ install_dotfiles() {
     # it's needed to have a directory to drop some configs
     sudo su ${USR} -s /bin/zsh -lc "timeout 1s firefox --headless"
 
-    git clone https://github.com/deeedob/ddob-dotfiles ${USR_HOME}/.dotfiles
+    git clone --recursive https://github.com/deeedob/ddob-dotfiles ${USR_HOME}/.dotfiles
     chmod +x ${USR_HOME}/.dotfiles/install
     chown -R ${USR}:${USR} ${USR_HOME}
     sudo -u ${USR} ${USR_HOME}/.dotfiles/install
@@ -543,6 +544,9 @@ enable_services() {
 
 customization() {
     plymouth-set-default-theme -R lone
+    git clone https://github.com/deeedob/arch-install.git
+    mv arch-install/refind/themes /boot/EFI/refind/
+    rm -rf arch-install
+    echo "include themes/refind-black/theme.conf" >> /boot/EFI/refind/refind.conf
+    sed -i 's/EFI\/refind\/icons/EFI\/refind\/themes\/refind-black\/icons/g' /boot/EFI/refind/refind.conf
 }
-
-
