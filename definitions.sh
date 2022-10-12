@@ -396,7 +396,7 @@ prepare_system() {
         pacman --needed --noconfirm -S refind
         refind-install
         rm -f /boot/refind_linux.conf
-        RUUID_=$(blkid $ROOT_DEVICE | grep -Pwo 'UUID="\K[^"]*')
+        RUUID_=$(blkid ${ROOT_DEVICE} | grep -Pwo 'UUID="\K[^"]*')
         echo "\"Boot with standard options\" \"root=UUID=${RUUID_} rw quiet splash button.lid_init_state=open acpi_backlight=vendor\"" > /boot/refind_linux.conf
     elif [ "$UEFI" == n ]; then
         pacman --needed --noconfirm -S grub
@@ -521,6 +521,7 @@ install_dotfiles() {
     git clone --recursive https://github.com/deeedob/ddob-dotfiles ${USR_HOME}/.dotfiles
     chmod +x ${USR_HOME}/.dotfiles/install
     chown -R ${USR}:${USR} ${USR_HOME}
+    cd ${USR_HOME}/.dotfiles
     sudo -u ${USR} ${USR_HOME}/.dotfiles/install
 
     # neovim config installs plugins if missing automatically

@@ -29,6 +29,8 @@ BASE_APPS=(
     'wget'                          # OPTIONAL: Utility to download files
     'xdg-user-dirs'                 # OPTIONAL: Manager for user directories
     'zsh'                           # OPTIONAL: An alternate shell to bash
+    'ufw'                           # OPTIONAL: firewall
+    'neovim'                        # OPTIONAL: texteditor
 )
 
 # user applications
@@ -89,6 +91,7 @@ SERVICES=(
     'mpd'
     'sshd'
     'dhcpcd'
+    'ufw'
 )
 
 # this will get populated automatically
