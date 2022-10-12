@@ -88,6 +88,7 @@ SERVICES=(
     'cronie'
     'mpd'
     'sshd'
+    'dhcpcd'
 )
 
 # this will get populated automatically
