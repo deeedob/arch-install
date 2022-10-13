@@ -276,13 +276,14 @@ partition_and_mount_uefi() {
 
     if [ "${PART_SWAP}" = "Yes" ]; then
         # partition formatting for swap
-        mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
+        mkfs.fat -F 32 /dev/$PARTITIONS[1]          # boot
         mkswap /dev/$PARTITIONS[2] -L SWAP          # swap
         mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT       # root
 
-        # mount partitions
         mkdir -pv /mnt
         mount /dev/$PARTITIONS[3] /mnt
+        # mount partitions
+
         mount --mkdir /dev/$PARTITIONS[1] /mnt/boot
         swapon /dev/$PARTITIONS[2]
 
@@ -297,11 +298,13 @@ partition_and_mount_uefi() {
             mount --mkdir /dev/$PARTITIONS[4] /mnt/home
         fi
 
+
         echo "export HOME_DEVICE=/dev/$PARTITIONS[4]" >> vars.sh
     else
         # partition formatting
-        mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
+        mkfs.fat -F 32 /dev/$PARTITIONS[1]          # boot
         mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT       # root
+        mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
 
         # mount partitions
         mkdir -pv /mnt
@@ -318,6 +321,8 @@ partition_and_mount_uefi() {
             mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
             mount --mkdir /dev/$PARTITIONS[3] /mnt/home
         fi
+
+
 
         echo "export HOME_DEVICE=/dev/$PARTITIONS[3]" >> vars.sh
     fi
