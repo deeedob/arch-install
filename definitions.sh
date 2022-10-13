@@ -279,20 +279,23 @@ partition_and_mount_uefi() {
         mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
         mkswap /dev/$PARTITIONS[2] -L SWAP          # swap
         mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT       # root
-        if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
-            # Encrypt the home partition
-            echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[4]
-            echo "${PASSWD}" | cryptsetup open /dev/$PARTITIONS[4] crypthome
-            mkfs.ext4 /dev/mapper/crypthome
-        else
-            mkfs.ext4 /dev/$PARTITIONS[4] -L HOME       # home
-        fi
+
         # mount partitions
         mkdir -pv /mnt
         mount /dev/$PARTITIONS[3] /mnt
         mount --mkdir /dev/$PARTITIONS[1] /mnt/boot
-        mount --mkdir /dev/$PARTITIONS[4] /mnt/home
         swapon /dev/$PARTITIONS[2]
+
+        if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
+            # Encrypt the home partition
+            echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[4]
+            echo "${PASSWD}" | cryptsetup open /dev/$PARTITIONS[4] ${USR}-home
+            mkfs.ext4 /dev/mapper/${USR}-home
+            mount --mkdir /dev/mapper/${USR}-home /mnt/home
+        else
+            mkfs.ext4 /dev/$PARTITIONS[4] -L HOME       # home
+            mount --mkdir /dev/$PARTITIONS[4] /mnt/home
+        fi
 
         echo "export HOME_DEVICE=/dev/$PARTITIONS[4]" >> vars.sh
     else
@@ -300,20 +303,24 @@ partition_and_mount_uefi() {
         mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
         mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT       # root
         mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
-        if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
-            # Encrypt the home partition
-            echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[3]
-            echo "${PASSWD}" | cryptsetup open /dev/$PARTITIONS[3] crypthome
-            mkfs.ext4 /dev/mapper/crypthome
-        else
-            mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
-        fi
 
         # mount partitions
         mkdir -pv /mnt
         mount /dev/$PARTITIONS[2] /mnt
         mount --mkdir /dev/$PARTITIONS[1] /mnt/boot
-        mount --mkdir /dev/$PARTITIONS[3] /mnt/home
+
+        if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
+            # Encrypt the home partition
+            echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[3]
+            echo "${PASSWD}" | cryptsetup open /dev/$PARTITIONS[3] ${USR}-home
+            mkfs.ext4 /dev/mapper/${USR}-home
+            mount --mkdir /dev/mapper/${USR}-home /mnt/home
+        else
+            mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
+            mount --mkdir /dev/$PARTITIONS[3] /mnt/home
+        fi
+
+
 
         echo "export HOME_DEVICE=/dev/$PARTITIONS[3]" >> vars.sh
     fi
@@ -471,7 +478,7 @@ setup_crypt() {
 		PARTITION="${HOME_DEVICE}"
 		NAME="home-\${CRYPT_USER}"
 		if [ "\$PAM_USER" = "\$CRYPT_USER" ] && [ ! -e "/dev/mapper/\$NAME" ]; then
-		    /usr/bin/cryptsetup open "\$PARTITION" "\$NAME"      
+		    /usr/bin/cryptsetup open "\$PARTITION" "\$NAME"
 		fi
 	EOL
     chmod +x /etc/pam_cryptsetup.sh
