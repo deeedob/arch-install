@@ -470,9 +470,9 @@ setup_crypt() {
 		
 		CRYPT_USER="${USR}"
 		PARTITION="${HOME_DEVICE}"
-		NAME="home-$CRYPT_USER"
-		if [ "$PAM_USER" = "$CRYPT_USER" ] && [ ! -e "/dev/mapper/$NAME" ]; then
-		    /usr/bin/cryptsetup open "$PARTITION" "$NAME"      
+		NAME="home-\${CRYPT_USER}"
+		if [ "\$PAM_USER" = "\$CRYPT_USER" ] && [ ! -e "/dev/mapper/\$NAME" ]; then
+		    /usr/bin/cryptsetup open "\$PARTITION" "\$NAME"      
 		fi
 	EOL
     chmod +x /etc/pam_cryptsetup.sh
@@ -538,7 +538,7 @@ install_applications() {
 
     # install user applications
     #sudo su ${USR} -s /bin/zsh -lc "$ins ${APPS[*]}"
-    paru --noconfirm -S plymouth-git plymouth-theme-lone-git
+    su - ${USR} -c "paru --noconfirm -S plymouth-git plymouth-theme-lone-git"
 
     if [ "${DOTFILES}" == "Yes" ]; then
         install_dotfiles
