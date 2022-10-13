@@ -275,6 +275,10 @@ partition_and_mount_uefi() {
     done))
 
     if [ "${PART_SWAP}" = "Yes" ]; then
+        # partition formatting for swap
+        mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
+        mkswap /dev/$PARTITIONS[2] -L SWAP          # swap
+        mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT       # root
         if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
             # Encrypt the home partition
             echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[4]
@@ -283,11 +287,6 @@ partition_and_mount_uefi() {
         else
             mkfs.ext4 /dev/$PARTITIONS[4] -L HOME       # home
         fi
-        # partition formatting for swap
-        mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
-        mkswap /dev/$PARTITIONS[2] -L SWAP          # swap
-        mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT       # root
-    
         # mount partitions
         mkdir -pv /mnt
         mount /dev/$PARTITIONS[3] /mnt
@@ -297,6 +296,10 @@ partition_and_mount_uefi() {
 
         echo "export HOME_DEVICE=/dev/$PARTITIONS[4]" >> vars.sh
     else
+        # partition formatting
+        mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
+        mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT       # root
+        mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
         if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
             # Encrypt the home partition
             echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[3]
@@ -305,10 +308,6 @@ partition_and_mount_uefi() {
         else
             mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
         fi
-        # partition formatting
-        mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
-        mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT       # root
-        mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
 
         # mount partitions
         mkdir -pv /mnt
