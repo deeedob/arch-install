@@ -27,7 +27,7 @@ BASE_APPS=(
     'reflector'                     # OPTIONAL: Get download mirrors
     'usbutils'                      # OPTIONAL: Various tools for USB devices
     'wget'                          # OPTIONAL: Utility to download files
-    'xdg-user-dirs'                 # OPTIONAL: Manager for user directories
+    #'xdg-user-dirs'                 # OPTIONAL: Manager for user directories
     'zsh'                           # OPTIONAL: An alternate shell to bash
     'ufw'                           # OPTIONAL: firewall
     'neovim'                        # OPTIONAL: texteditor

@@ -299,6 +299,7 @@ partition_and_mount_uefi() {
 
 
         echo "export HOME_DEVICE=/dev/$PARTITIONS[4]" >> vars.sh
+        echo "export ROOT_PART=/dev/$PARTITIONS[3]" >> vars.sh
     else
         # partition formatting
         mkfs.fat -F 32 /dev/$PARTITIONS[1]          # boot
@@ -324,6 +325,7 @@ partition_and_mount_uefi() {
 
 
         echo "export HOME_DEVICE=/dev/$PARTITIONS[3]" >> vars.sh
+        echo "export ROOT_PART=/dev/$PARTITIONS[2]" >> vars.sh
     fi
 
 
@@ -423,7 +425,7 @@ prepare_system() {
         pacman --needed --noconfirm -S refind
         refind-install
         rm -f /boot/refind_linux.conf
-        RUUID_=$(blkid ${ROOT_DEVICE} | grep -Pwo 'UUID="\K[^"]*')
+        RUUID_=$(blkid ${ROOT_PART} | grep -Pwo 'UUID="\K[^"]*')
         echo "\"Boot with standard options\" \"root=UUID=${RUUID_} rw quiet splash button.lid_init_state=open acpi_backlight=vendor\"" > /boot/refind_linux.conf
     elif [ "$UEFI" == n ]; then
         pacman --needed --noconfirm -S grub
