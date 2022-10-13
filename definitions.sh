@@ -280,10 +280,9 @@ partition_and_mount_uefi() {
         mkswap /dev/$PARTITIONS[2] -L SWAP          # swap
         mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT       # root
 
+        # mount partitions
         mkdir -pv /mnt
         mount /dev/$PARTITIONS[3] /mnt
-        # mount partitions
-
         mount --mkdir /dev/$PARTITIONS[1] /mnt/boot
         swapon /dev/$PARTITIONS[2]
 
