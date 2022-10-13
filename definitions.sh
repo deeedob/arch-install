@@ -275,11 +275,18 @@ partition_and_mount_uefi() {
     done))
 
     if [ "${PART_SWAP}" = "Yes" ]; then
+        if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
+            # Encrypt the home partition
+            echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[4]
+            echo "${PASSWD}" | cryptsetup open /dev/$PARTITIONS[4] crypthome
+            mkfs.ext4 /dev/mapper/crypthome
+        else
+            mkfs.ext4 /dev/$PARTITIONS[4] -L HOME       # home
+        fi
         # partition formatting for swap
-        mkfs.fat -F 32 /dev/$PARTITIONS[1]     # boot
-        mkswap /dev/$PARTITIONS[2] -L SWAP     # swap
-        mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT  # root
-        mkfs.ext4 /dev/$PARTITIONS[4] -L HOME  # home
+        mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
+        mkswap /dev/$PARTITIONS[2] -L SWAP          # swap
+        mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT       # root
     
         # mount partitions
         mkdir -pv /mnt
@@ -287,18 +294,31 @@ partition_and_mount_uefi() {
         mount --mkdir /dev/$PARTITIONS[1] /mnt/boot
         mount --mkdir /dev/$PARTITIONS[4] /mnt/home
         swapon /dev/$PARTITIONS[2]
+
+        echo "export HOME_DEVICE=/dev/$PARTITIONS[4]" >> vars.sh
     else
+        if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
+            # Encrypt the home partition
+            echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[3]
+            echo "${PASSWD}" | cryptsetup open /dev/$PARTITIONS[3] crypthome
+            mkfs.ext4 /dev/mapper/crypthome
+        else
+            mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
+        fi
         # partition formatting
-        mkfs.fat -F 32 /dev/$PARTITIONS[1]     # boot
-        mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT  # root
-        mkfs.ext4 /dev/$PARTITIONS[3] -L HOME  # home
+        mkfs.fat -F 32 /dev/$PARTITIONS[1] -L BOOT  # boot
+        mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT       # root
+        mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
 
         # mount partitions
         mkdir -pv /mnt
         mount /dev/$PARTITIONS[2] /mnt
         mount --mkdir /dev/$PARTITIONS[1] /mnt/boot
         mount --mkdir /dev/$PARTITIONS[3] /mnt/home
+
+        echo "export HOME_DEVICE=/dev/$PARTITIONS[3]" >> vars.sh
     fi
+
 
     # get mirrors
     reflector > /etc/pacman.d/mirrorlist
@@ -432,8 +452,69 @@ setup_users() {
     echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/wheel_sudo
     # add insults to injury
     echo 'Defaults insults' > /etc/sudoers.d/insults
+    if [ "${ENCRYPT_DRIVE}" = "Yes" ]; then
+        setup_crypt
+    fi
+
 }
 
+###############
+# SETUP CRYPT #
+###############
+setup_crypt() {
+    sed -i '/auth/a auth      optional  pam_exec.so expose_authtok /etc/pam_cryptsetup.sh' /etc/pam.d/system-local-login
+    # this: "<<-" ignores indentation, but only for tab characters
+    # unlocking at login
+    cat <<- EOL > /etc/pam_cryptsetup.sh
+		#!/bin/sh
+		
+		CRYPT_USER="${USR}"
+		PARTITION="${HOME_DEVICE}"
+		NAME="home-$CRYPT_USER"
+		if [ "$PAM_USER" = "$CRYPT_USER" ] && [ ! -e "/dev/mapper/$NAME" ]; then
+		    /usr/bin/cryptsetup open "$PARTITION" "$NAME"      
+		fi
+	EOL
+    chmod +x /etc/pam_cryptsetup.sh
+    # Mounting and unmounting automatically
+    UID=$(id --user ${USR})
+    cat <<- EOL > /etc/systemd/system/home-${USR}.mount
+		[Unit]
+		Requires=${USR}@${UID}.service
+		Before=${USR}@${UID}.service
+		[Mount]
+		Where=/home/${USR}
+		What=/dev/mapper/home-${USR}
+		Type=btrfs
+		Options=defaults,relatime,compress=zstd
+		
+		[Install]
+		RequiredBy=${USR}@${UID}.service
+	EOL
+    # Locking after unmounting
+    cat <<- EOL > /etc/systemd/system/cryptsetup-${USR}.service
+		[Unit]
+		DefaultDependencies=no
+		BindsTo=dev-${HOME_DEVICE}.device
+		After=dev-${HOME_DEVICE}.device
+		BindsTo=dev-mapper-home\x2d${USR}.device
+		Requires=home-${USR}.mount
+		Before=home-${USR}.mount
+		Conflicts=umount.target
+		Before=umount.target
+		
+		[Service]
+		Type=oneshot
+		RemainAfterExit=yes
+		TimeoutSec=0
+		ExecStop=/usr/bin/cryptsetup close home-${USR}
+		
+		[Install]
+		RequiredBy=dev-mapper-home\x2d${USR}.device
+	EOL
+    systemctl enable home-${USR}.mount
+    systemctl enable cryptsetup-${USR}.service
+}
 
 #################
 # CUSTOMIZATION #
