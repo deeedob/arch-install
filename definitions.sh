@@ -323,7 +323,6 @@ partition_and_mount_uefi() {
         fi
 
 
-
         echo "export HOME_DEVICE=/dev/$PARTITIONS[3]" >> vars.sh
         echo "export ROOT_PART=/dev/$PARTITIONS[2]" >> vars.sh
     fi
@@ -367,7 +366,7 @@ partition_and_mount_bios() {
 install_base() {
     pacstrap /mnt ${BASE[*]}
     reflector > /mnt/etc/pacman.d/mirrorlist
-    genfstab -U /mnt >> /mnt/etc/fstab
+    genfstab -U /mnt | tac | sed '/\/home/I,+2 d' | tac > /mnt/etc/fstab
 }
 
 
@@ -394,7 +393,7 @@ setup_network() {
 
 configure_locale() {
     sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
-    sed -i 's/^#es_AR.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
+    sed -i 's/^#de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
 
     locale-gen
 
@@ -452,7 +451,7 @@ install_cpu_ucode() {
 # USERS #
 #########
 setup_users() {
-    useradd -mG wheel,video,audio,optical,storage,games -s /bin/zsh ${USR}
+    useradd -mG wheel,video,audio,optical,storage,games,kvm -s /bin/zsh ${USR}
     echo -e "${PASSWD}\n${PASSWD}\n" | passwd ${USR}
 
     export USR_HOME=$(getent passwd ${USR} | cut -d\: -f6)
@@ -471,7 +470,7 @@ setup_users() {
 # SETUP CRYPT #
 ###############
 setup_crypt() {
-    sed -i '/auth/a auth      optional  pam_exec.so expose_authtok /etc/pam_cryptsetup.sh' /etc/pam.d/system-local-login
+    sed -i '/auth[ \t]*include[ \t]*system-auth/a auth       optional   pam_exec.so expose_authtok /etc/pam_cryptsetup.sh' /etc/pam.d/system-login
     # this: "<<-" ignores indentation, but only for tab characters
     # unlocking at login
     cat <<- EOL > /etc/pam_cryptsetup.sh
@@ -486,19 +485,18 @@ setup_crypt() {
 	EOL
     chmod +x /etc/pam_cryptsetup.sh
     # Mounting and unmounting automatically
-    UID=$(id --user ${USR})
-    cat <<- EOL > /etc/systemd/system/home-${USR}.mount
+    export USERID=$(id --user ${USR})
+    cat <<- EOL > /etc/systemd/system/home.mount
 		[Unit]
-		Requires=${USR}@${UID}.service
-		Before=${USR}@${UID}.service
+		Requires=user@${USERID}.service
+		Before=user@${USERID}.service
 		[Mount]
-		Where=/home/${USR}
+		Where=/home
 		What=/dev/mapper/home-${USR}
-		Type=btrfs
-		Options=defaults,relatime,compress=zstd
+		Options=defaults,relatime
 		
 		[Install]
-		RequiredBy=${USR}@${UID}.service
+		RequiredBy=user@${USERID}.service
 	EOL
     # Locking after unmounting
     cat <<- EOL > /etc/systemd/system/cryptsetup-${USR}.service
@@ -507,8 +505,8 @@ setup_crypt() {
 		BindsTo=dev-${HOME_DEVICE}.device
 		After=dev-${HOME_DEVICE}.device
 		BindsTo=dev-mapper-home\x2d${USR}.device
-		Requires=home-${USR}.mount
-		Before=home-${USR}.mount
+		Requires=home.mount
+		Before=home.mount
 		Conflicts=umount.target
 		Before=umount.target
 		
@@ -521,7 +519,7 @@ setup_crypt() {
 		[Install]
 		RequiredBy=dev-mapper-home\x2d${USR}.device
 	EOL
-    systemctl enable home-${USR}.mount
+    systemctl enable home.mount
     systemctl enable cryptsetup-${USR}.service
 }
 
