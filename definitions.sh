@@ -376,6 +376,7 @@ configure_locale() {
 
     locale-gen
 
+    echo "KEYMAP=de" > /etc/vconsole.conf
     echo "LANG=en_US.UTF-8" > /etc/locale.conf
 }
 
