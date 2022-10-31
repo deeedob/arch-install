@@ -29,7 +29,7 @@ BASE_APPS=(
     'wget'                          # OPTIONAL: Utility to download files
     #'xdg-user-dirs'                 # OPTIONAL: Manager for user directories
     'zsh'                           # OPTIONAL: An alternate shell to bash
-    'ufw'                           # OPTIONAL: firewall
+    'firewalld'                           # OPTIONAL: firewall
     'neovim'                        # OPTIONAL: texteditor
 )
 
