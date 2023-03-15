@@ -4,6 +4,8 @@
 #############
 
 setup_variables() {
+
+    echo "\x1b[1;36m"
     # this is ASCII art
     base64 -d <<<"H4sIAAAAAAAAA1NQAIF4/Xh9GA1hIdgwGZioggI2eQiNUIsQ5VLAFEdWgdsGhAw2/TA+F8wpEC6y
 YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
@@ -14,7 +16,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     echo "\x1b[33m"
     # show the drives in yellow
     lsblk
-    echo "\x1b[0m" # yellow
+    echo "\x1b[0m"
     echo
     PS3="Choose the root drive: "
 
@@ -57,7 +59,8 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
         if [ ${PART_SWAP} = "Yes" ]; then
             MEMTOTAL_=$(numfmt --field=2 --from-unit=1024 --to=iec-i --suffix B < /proc/meminfo  | sed 's/ kB//' | sed 's|[GiB]||g' | head -n4 | grep "MemTotal" | awk '{printf("%.0f\n",$2)}')
             echo
-            echo "\x1b[33m" # Yellow
+            echo "\x1b[33m"
+            # show the tip in yellow
 
             echo "Your Device MemTotal is: ${MEMTOTAL_}G"
             if [ $MEMTOTAL_ -le 2 ]; then
@@ -78,7 +81,6 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
             fi
             echo "\x1b[0m"
             echo
-
             read "SWAP_SIZE?SWAP size {G,GiB}: "
             SWAP_SIZE_=$(echo $SWAP_SIZE | sed 's|[GiB]||g')
             HOME_SIZE=$((HOME_SIZE - SWAP_SIZE_))
@@ -94,7 +96,6 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
         echo "\x1b[33m"
         read -s "PASSWD?Enter your password: "
         echo ""
-
         read -s "CONF_PASSWD?Re-enter your password: "
         echo "\x1b[31m"
         [ "$PASSWD" != "$CONF_PASSWD" ]
