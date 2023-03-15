@@ -2,9 +2,8 @@
 #############
 # PRE-SETUP #
 #############
-setup_variables() {
 
-    echo "\x1b[1;36m"
+setup_variables() {
     # this is ASCII art
     base64 -d <<<"H4sIAAAAAAAAA1NQAIF4/Xh9GA1hIdgwGZioggI2eQiNUIsQ5VLAFEdWgdsGhAw2/TA+F8wpEC6y
 YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
@@ -15,7 +14,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
     echo "\x1b[33m"
     # show the drives in yellow
     lsblk
-    echo "\x1b[0m"
+    echo "\x1b[0m" # yellow
     echo
     PS3="Choose the root drive: "
 
@@ -35,6 +34,14 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
         fi
     done
 
+    PS3="Choose a file system: "
+    select FILESYSTEM in "btrfs" "ext4"
+    do
+        if [ $FILESYSTEM ]; then
+            break
+        fi
+    done
+
     #specify root size
     SZR_=$(lsblk | grep $ROOT_DEVICE | head -n1 | awk '{print $4}' | sed 's|[GiB]||g')
     echo "Select the root size"
@@ -50,8 +57,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
         if [ ${PART_SWAP} = "Yes" ]; then
             MEMTOTAL_=$(numfmt --field=2 --from-unit=1024 --to=iec-i --suffix B < /proc/meminfo  | sed 's/ kB//' | sed 's|[GiB]||g' | head -n4 | grep "MemTotal" | awk '{printf("%.0f\n",$2)}')
             echo
-            echo "\x1b[33m"
-            # show the tip in yellow
+            echo "\x1b[33m" # Yellow
 
             echo "Your Device MemTotal is: ${MEMTOTAL_}G"
             if [ $MEMTOTAL_ -le 2 ]; then
@@ -72,6 +78,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
             fi
             echo "\x1b[0m"
             echo
+
             read "SWAP_SIZE?SWAP size {G,GiB}: "
             SWAP_SIZE_=$(echo $SWAP_SIZE | sed 's|[GiB]||g')
             HOME_SIZE=$((HOME_SIZE - SWAP_SIZE_))
@@ -87,6 +94,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
         echo "\x1b[33m"
         read -s "PASSWD?Enter your password: "
         echo ""
+
         read -s "CONF_PASSWD?Re-enter your password: "
         echo "\x1b[31m"
         [ "$PASSWD" != "$CONF_PASSWD" ]
@@ -119,6 +127,7 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
 		export SWAP_SIZE=$SWAP_SIZE
 		export HOME_SIZE=$HOME_SIZE
 		export PART_SWAP=$PART_SWAP
+        export FILESYSTEM=$FILESYSTEM
 		export USR=$USR
 		export PASSWD=$PASSWD
 		export HOSTNAME=$HOSTNAME
@@ -130,7 +139,6 @@ YmSH4jMeFaM6nlKnIzyAxem4/IU95NE9iWotuseBxgMAqF41l90BAAA=" | gunzip
 }
 
 print_summary() {
-
     echo -e "\n--------------------"
     echo "Summary:"
     echo ""
@@ -144,6 +152,8 @@ print_summary() {
     else
         echo "You \x1b[1;33mWILL NOT\x1b[0m have disk-encryption"
     fi
+
+    echo "With filesystem: \x1b[1;33m$FILESYSTEM big\x1b[0m"
 
     echo "The root partition will be \x1b[1;33m$ROOT_SIZE big\x1b[0m"
 
@@ -206,7 +216,8 @@ partition_and_mount() {
 
 partition_and_mount_uefi() {
     # disk partitioning
-    wipefs --all --force $ROOT_DEVICE
+    wipefs --all --force "$ROOT_DEVICE"
+
     # cut removes comments from heredoc
     # this: "<<-" ignores indentation, but only for tab characters
     if [ "${PART_SWAP}" = "Yes" ]; then
@@ -258,7 +269,8 @@ partition_and_mount_uefi() {
         # partition formatting for swap
         mkfs.fat -F 32 /dev/$PARTITIONS[1]          # boot
         mkswap /dev/$PARTITIONS[2] -L SWAP          # swap
-        mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT       # root
+        eval "mkfs.${FILESYSTEM} /dev/${PARTITIONS[3]} -L ROOT"
+        # mkfs.ext4 /dev/$PARTITIONS[3] -L ROOT       # root
 
         # mount partitions
         mkdir -pv /mnt
@@ -270,21 +282,23 @@ partition_and_mount_uefi() {
             # Encrypt the home partition
             echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[4]
             echo "${PASSWD}" | cryptsetup open /dev/$PARTITIONS[4] ${USR}-home
-            mkfs.ext4 /dev/mapper/${USR}-home
+            eval "mkfs.${FILESYSTEM} /dev/mapper/${USR}-home"
+            # mkfs.ext4 /dev/mapper/${USR}-home
             mount --mkdir /dev/mapper/${USR}-home /mnt/home
         else
-            mkfs.ext4 /dev/$PARTITIONS[4] -L HOME       # home
+            eval "mkfs.${FILESYSTEM} /dev/${PARTITIONS[4]} -L HOME"
+            # mkfs.ext4 /dev/$PARTITIONS[4] -L HOME       # home
             mount --mkdir /dev/$PARTITIONS[4] /mnt/home
         fi
-
-
-        echo "export HOME_DEVICE=/dev/$PARTITIONS[4]" >> vars.sh
-        echo "export ROOT_PART=/dev/$PARTITIONS[3]" >> vars.sh
+        echo "export HOME_DEVICE=/dev/${PARTITIONS[4]}" >> vars.sh
+        echo "export ROOT_PART=/dev/${PARTITIONS[3]}" >> vars.sh
     else
         # partition formatting
         mkfs.fat -F 32 /dev/$PARTITIONS[1]          # boot
-        mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT       # root
-        mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
+        eval "mkfs.${FILESYSTEM} /dev/${PARTITIONS[2]} -L ROOT"
+        eval "mkfs.${FILESYSTEM} /dev/${PARTITIONS[3]} -L HOME"
+        # mkfs.ext4 /dev/$PARTITIONS[2] -L ROOT       # root
+        # mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
 
         # mount partitions
         mkdir -pv /mnt
@@ -295,19 +309,17 @@ partition_and_mount_uefi() {
             # Encrypt the home partition
             echo "${PASSWD}" | cryptsetup -q luksFormat /dev/$PARTITIONS[3]
             echo "${PASSWD}" | cryptsetup open /dev/$PARTITIONS[3] ${USR}-home
-            mkfs.ext4 /dev/mapper/${USR}-home
+            eval "mkfs.${FILESYSTEM} /dev/mapper/${USR}-home"
+            # mkfs.ext4 /dev/mapper/${USR}-home
             mount --mkdir /dev/mapper/${USR}-home /mnt/home
         else
-            mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
+            eval "mkfs.${FILESYSTEM} /dev/${PARTITIONS[3]} -L HOME"
+            # mkfs.ext4 /dev/$PARTITIONS[3] -L HOME       # home
             mount --mkdir /dev/$PARTITIONS[3] /mnt/home
         fi
-
-
         echo "export HOME_DEVICE=/dev/$PARTITIONS[3]" >> vars.sh
         echo "export ROOT_PART=/dev/$PARTITIONS[2]" >> vars.sh
     fi
-
-
     # get mirrors
     reflector > /etc/pacman.d/mirrorlist
 }
@@ -332,7 +344,8 @@ partition_and_mount_bios() {
     done))
 
     # partition formatting
-    mkfs.ext4 /dev/$PARTITIONS[1] -L ROOT  # root/boot
+    eval "mkfs.${FILESYSTEM} -L ROOT"
+    # mkfs.ext4 /dev/$PARTITIONS[1] -L ROOT  # root/boot
 
     # mount partitions
     mkdir -pv /mnt
@@ -604,7 +617,7 @@ install_dotfiles() {
 enable_services() {
     for service in ${SERVICES[*]}
     do
-        systemctl enable $service
+        systemctl enable "$service"
     done
 }
 

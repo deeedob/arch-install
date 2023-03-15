@@ -1,5 +1,6 @@
-#!/bin/zsh
-# deedobs Arch installation script
+#!/bin/bash
+
+# Arch installation script
 
 # fetch scripts
 if ! [ -f definitions.sh ]; then
